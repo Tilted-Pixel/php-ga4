@@ -18,7 +18,7 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
 
     const ALLOW_RESPONSE_HEADERS = [200, 204];
 
-    private $debug;
+    private $debug_mode;
     private $measurement_id;
     private $api_secret;
 
@@ -26,15 +26,16 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
     protected $timestamp_micros;
     protected $client_id;
     protected $user_id;
-    protected $session_id;
+    protected int $session_id;
     protected $user_properties = [];
     protected $events = [];
 
-    public function __construct(string $measurementId, string $apiSecret, bool $debug = false)
+
+    public function __construct(string $measurementId, string $apiSecret, bool $debugMode = false)
     {
         $this->measurement_id = $measurementId;
         $this->api_secret = $apiSecret;
-        $this->debug = $debug;
+        $this->debug_mode = $debugMode;
     }
 
     public function getParams(): array
@@ -93,13 +94,13 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
         return $this->user_id;
     }
 
-    public function setSessionId(string $id)
+    public function setSessionId(int $id)
     {
         $this->session_id = $id;
         return $this;
     }
 
-    public function getSessionId(): ?string
+    public function getSessionId(): ?int
     {
         return $this->session_id;
     }
@@ -169,8 +170,10 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
      */
     public function post()
     {
-        $url = $this->debug ? $this::URL_DEBUG : $this::URL_LIVE;
-        $url .= '?' . http_build_query(['measurement_id' => $this->measurement_id, 'api_secret' => $this->api_secret]);
+        $url = $this::URL_LIVE;
+        
+        $urlParams = ['measurement_id' => $this->measurement_id, 'api_secret' => $this->api_secret];
+        $url .= '?' . http_build_query($urlParams);
 
         $reqBody = parent::toArray(true);
 
@@ -225,8 +228,13 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
     public function toArray(bool $isParent = false): array
     {
         $array = parent::toArray($isParent);
-        if (!isset($this->session_id)) {
+
+        if (empty($this->session_id)) {
             unset($array['session_id']);
+        }
+
+        if ($this->debug_mode) {
+            $array['debug_mode'] = 1;
         }
         return $array;
     }
