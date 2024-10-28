@@ -45,7 +45,6 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
             'timestamp_micros',
             'client_id',
             'user_id',
-            'session_id',
             'user_properties',
             'events',
         ];
@@ -175,12 +174,27 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
         $urlParams = ['measurement_id' => $this->measurement_id, 'api_secret' => $this->api_secret];
         $url .= '?' . http_build_query($urlParams);
 
-        $reqBody = parent::toArray(true);
+        $reqBody = $this->toArray();
 
         $eventsList = array_chunk($reqBody['events'] ?? [], 25);
 
         foreach ($eventsList as $events) {
+
+            // analytics wants to have session_id and debug_mode in each event
+            // inject them in
+            foreach ($events as &$event) {
+
+                if (!empty($this->session_id)) {
+                    $event['params']['session_id'] = $this->session_id;
+                }
+
+                if( $this->debug_mode ) {
+                    $event['params']['debug_mode'] = 1;
+                }
+            }
+
             $reqBody['events'] = $events;
+            
 
             $kB = 1024;
             if (mb_strlen(json_encode($reqBody)) > ($kB * 130)) {
@@ -228,14 +242,6 @@ class Analytics extends Model\ToArray implements Facade\Analytics, Facade\Export
     public function toArray(bool $isParent = false): array
     {
         $array = parent::toArray($isParent);
-
-        if (empty($this->session_id)) {
-            unset($array['session_id']);
-        }
-
-        if ($this->debug_mode) {
-            $array['debug_mode'] = 1;
-        }
         return $array;
     }
 
