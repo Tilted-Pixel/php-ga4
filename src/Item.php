@@ -179,7 +179,7 @@ class Item extends Model\ToArray implements Facade\Export, Facade\Item
                 continue;
             }
 
-            $callableName = implode('', array_map('ucfirst', explode('_', $insertable)));
+            $callableName = implode('', array_map('ucfirst', explode('_', (string) $insertable)));
 
             if (method_exists($item, ($method = 'add' . $callableName))) {
                 $item->$method($param);
