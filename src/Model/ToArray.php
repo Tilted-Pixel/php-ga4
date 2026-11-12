@@ -37,14 +37,14 @@ abstract class ToArray implements Facade\Export
                 continue;
             }
 
-            if (strlen($param) > 40) {
+            if (strlen((string) $param) > 40) {
                 GA4Exception::push("Param '{$param}' is too long, maximum is 40 characters");
             }
 
             $value = $this->{$param};
 
             // Array values be handled and validated within setter, fx addItem/setItem
-            if (!is_array($value) && mb_strlen($value) > 100) {
+            if (!is_array($value) && mb_strlen((string) $value) > 100) {
                 GA4Exception::push("Value '{$value}' is too long, maximum is 100 characters");
             }
 
